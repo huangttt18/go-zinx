@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"zinx-demo/utils"
 	"zinx-demo/ziface"
 )
@@ -25,6 +26,10 @@ type Connection struct {
 	// Reader和Writer之间通信的 channel
 	// client -> server -> reader -> writer -> client
 	msgChan chan []byte
+	// 连接属性
+	props map[string]interface{}
+	// 连接属性锁
+	propLock sync.RWMutex
 }
 
 func NewConnection(server ziface.IServer, conn *net.TCPConn, connId uint32, msgHandler ziface.IMsgHandler) *Connection {
@@ -36,6 +41,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connId uint32, msgH
 		isClosed:   false,
 		ExitChan:   make(chan bool, 1),
 		msgChan:    make(chan []byte),
+		props:      make(map[string]interface{}),
 	}
 
 	// 将连接添加到连接管理器
@@ -45,9 +51,9 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connId uint32, msgH
 }
 
 func (conn *Connection) StartReader() {
-	fmt.Println("[Server]Start reader")
-	fmt.Println("[Server]Read message, connId =", conn.ConnId)
-	defer fmt.Println("[Server]Read message finished, connId =", conn.ConnId, " RemoteAddr =", conn.RemoteAddr().String())
+	fmt.Println("[Connection]Start reader")
+	fmt.Println("[Connection]Read message, connId =", conn.ConnId)
+	defer fmt.Println("[Connection]Read message finished, connId =", conn.ConnId, " RemoteAddr =", conn.RemoteAddr().String())
 	defer conn.Stop()
 
 	for {
@@ -56,14 +62,14 @@ func (conn *Connection) StartReader() {
 		// HeadData
 		headData := make([]byte, dp.GetHeadLen())
 		if _, err := io.ReadFull(conn.GetTcpConnection(), headData); err != nil {
-			fmt.Println("[Server]Read head error", err)
+			fmt.Println("[Connection]Read head error", err)
 			break
 		}
 
 		// 拆包为Message
 		msg, err := dp.Unpack(headData)
 		if err != nil {
-			fmt.Println("[Server]Unpack head error", err)
+			fmt.Println("[Connection]Unpack head error", err)
 			break
 		}
 
@@ -71,7 +77,7 @@ func (conn *Connection) StartReader() {
 		// 读取Data
 		if msg.GetDataLen() > 0 {
 			if _, err = io.ReadFull(conn.GetTcpConnection(), msgData); err != nil {
-				fmt.Println("[Server]Unpack data error", err)
+				fmt.Println("[Connection]Unpack data error", err)
 				break
 			}
 		}
@@ -97,16 +103,16 @@ func (conn *Connection) StartReader() {
 // StartWriter 启动一个处理写业务逻辑的Goroutine
 // 可以在写前、写后做一些额外的操作
 func (conn *Connection) StartWriter() {
-	fmt.Println("[Server]Start writer")
-	fmt.Println("[Server]Write message, connId =", conn.ConnId)
-	defer fmt.Println("[Server]Write message finished, connId =", conn.ConnId, " RemoteAddr =", conn.RemoteAddr().String())
+	fmt.Println("[Connection]Start writer")
+	fmt.Println("[Connection]Write message, connId =", conn.ConnId)
+	defer fmt.Println("[Connection]Write message finished, connId =", conn.ConnId, " RemoteAddr =", conn.RemoteAddr().String())
 
 	for {
 		// 写业务逻辑
 		select {
 		case binaryData := <-conn.msgChan:
 			if _, err := conn.GetTcpConnection().Write(binaryData); err != nil {
-				fmt.Println("[Server]Write message error", err)
+				fmt.Println("[Connection]Write message error", err)
 				return
 			}
 		case <-conn.ExitChan:
@@ -116,7 +122,7 @@ func (conn *Connection) StartWriter() {
 }
 
 func (conn *Connection) Start() {
-	fmt.Println("[Server]Connection start... connId =", conn.ConnId)
+	fmt.Println("[Connection]Connection start... connId =", conn.ConnId)
 	// 处理读业务
 	go conn.StartReader()
 	// 处理写业务
@@ -126,7 +132,7 @@ func (conn *Connection) Start() {
 }
 
 func (conn *Connection) Stop() {
-	fmt.Println("[Server]Connection stop... connId =", conn.ConnId)
+	fmt.Println("[Connection]Connection stop... connId =", conn.ConnId)
 
 	if conn.isClosed {
 		return
@@ -165,12 +171,48 @@ func (conn *Connection) SendMsg(msgId uint32, data []byte) error {
 	dp := NewDataPack()
 	binaryData, err := dp.Pack(NewMessage(msgId, data))
 	if err != nil {
-		fmt.Println("[Server]Pack message error, msgId=", msgId)
+		fmt.Println("[Connection]Pack message error, msgId=", msgId)
 		return err
 	}
 
 	// 发包, 将数据通过msgChan发送给Writer Goroutine
 	conn.msgChan <- binaryData
 
+	return nil
+}
+
+// SetProperty 设置连接属性
+func (conn *Connection) SetProperty(key string, value interface{}) {
+	// 加锁
+	conn.propLock.Lock()
+	defer conn.propLock.Unlock()
+
+	conn.props[key] = value
+}
+
+// GetProperty 获取连接属性
+func (conn *Connection) GetProperty(key string) (interface{}, error) {
+	// 加锁
+	conn.propLock.RLock()
+	defer conn.propLock.RUnlock()
+
+	if prop, ok := conn.props[key]; ok {
+		return prop, nil
+	}
+
+	return nil, errors.New("property does not exist")
+}
+
+// RemoveProperty 移除连接属性
+func (conn *Connection) RemoveProperty(key string) error {
+	// 加锁
+	conn.propLock.Lock()
+	defer conn.propLock.Unlock()
+
+	if _, ok := conn.props[key]; !ok {
+		return errors.New("property does not exist")
+	}
+
+	delete(conn.props, key)
 	return nil
 }
