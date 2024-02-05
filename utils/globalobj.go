@@ -7,7 +7,7 @@ import (
 	"zinx-demo/ziface"
 )
 
-// 全局配置文件
+// GlobalObj 全局配置文件
 type GlobalObj struct {
 	// 全局Server对象
 	TcpServer ziface.IServer
@@ -18,7 +18,7 @@ type GlobalObj struct {
 	// 服务器端口
 	TcpPort int
 
-	// Zinx版本号
+	// zinx版本号
 	Version string
 	// 最大连接数
 	MaxConn uint32
@@ -26,7 +26,7 @@ type GlobalObj struct {
 	MaxPacketSize uint32
 }
 
-// 从配置文件中读取配置
+// Reload 从配置文件中读取配置
 func (globalObj *GlobalObj) Reload() {
 	data, err := os.ReadFile("conf/zinx.json")
 	if err != nil {
@@ -48,7 +48,7 @@ func init() {
 		Name:          "ZinxServerApp",
 		Host:          "0.0.0.0",
 		TcpPort:       8999,
-		Version:       "zinx-v0.5",
+		Version:       "zinx-v0.6",
 		MaxConn:       1024,
 		MaxPacketSize: 4096,
 	}
