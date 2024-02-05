@@ -72,11 +72,9 @@ func (mh *MsgHandler) execute(workerId uint32, taskQueue chan ziface.IRequest) {
 	fmt.Printf("[MsgHandler]Worker[%d] start working\n", workerId)
 	// 阻塞等待消息的到来
 	for {
-		select {
-		case request := <-taskQueue:
-			// 消息到来之后就执行处理逻辑
-			mh.DoMsgHandle(request)
-		}
+		request := <-taskQueue
+		// 消息到来之后就执行处理逻辑
+		mh.DoMsgHandle(request)
 	}
 }
 
