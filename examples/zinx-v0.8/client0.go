@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	fmt.Println("[Client]Start client1...")
+	fmt.Println("[Client]Start client0...")
 	conn, err := net.Dial("tcp", "127.0.0.1:8999")
 	if err != nil {
 		fmt.Println("[Client]Connect to remote server error", err)
@@ -17,7 +17,7 @@ func main() {
 	}
 
 	for {
-		msg := zinx.NewMessage(1, []byte("Hello, Zinx-v0.7"))
+		msg := zinx.NewMessage(0, []byte("Hello, Zinx-v0.8"))
 		dp := zinx.NewDataPack()
 		// 封包
 		binaryData, err := dp.Pack(msg)
@@ -57,7 +57,7 @@ func main() {
 			msgRecv.SetData(msgData)
 		}
 
-		fmt.Println("[Client]Receive message from server, msgId=", msgRecv.GetMsgId(), "msgLen=", msgRecv.GetDataLen(), "msgData=", string(msgRecv.GetData()))
+		fmt.Println("[Client]Recv message from server, msgId=", msgRecv.GetMsgId(), "msgLen=", msgRecv.GetDataLen(), "msgData=", string(msgRecv.GetData()))
 
 		time.Sleep(2 * time.Second)
 	}

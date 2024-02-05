@@ -17,7 +17,7 @@ func main() {
 	}
 
 	for {
-		msg := zinx.NewMessage(0, []byte("Hello, Zinx-v0.6"))
+		msg := zinx.NewMessage(0, []byte("Hello, Zinx-v0.7"))
 		dp := zinx.NewDataPack()
 		// 封包
 		binaryData, err := dp.Pack(msg)

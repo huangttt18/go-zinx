@@ -6,4 +6,8 @@ type IMsgHandler interface {
 	DoMsgHandle(IRequest)
 	// AddRouter 添加路由到Handler中
 	AddRouter(uint32, IRouter)
+	// 初始化workerPool
+	InitWorkerPool()
+	// 提交任务到Worker
+	SubmitTask(IRequest)
 }

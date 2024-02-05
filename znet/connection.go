@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"zinx-demo/utils"
 	"zinx-demo/ziface"
 )
 
@@ -74,8 +75,14 @@ func (conn *Connection) StartReader() {
 			Msg:  msg,
 		}
 
-		// 根据MsgId找到对应的处理Handler并处理数据
-		go conn.MsgHandler.DoMsgHandle(&request)
+		// 如果开启了workerPool，则用workerPool来处理请求
+		if utils.GlobalObject.WorkerPoolSize > 0 {
+			// 将请求提交到workerPool中，由相应的worker来处理
+			conn.MsgHandler.SubmitTask(&request)
+		} else {
+			// 未开启workerPool，则手动开Goroutine来处理请求
+			go conn.MsgHandler.DoMsgHandle(&request)
+		}
 	}
 }
 
@@ -102,7 +109,6 @@ func (conn *Connection) StartWriter() {
 
 func (conn *Connection) Start() {
 	fmt.Println("[Server]Connection start... connId =", conn.ConnId)
-
 	// 处理读业务
 	go conn.StartReader()
 	// 处理写业务

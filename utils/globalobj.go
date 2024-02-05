@@ -24,6 +24,10 @@ type GlobalObj struct {
 	MaxConn uint32
 	// 每次请求最大处理字节数
 	MaxPacketSize uint32
+	// 工作池worker数量
+	WorkerPoolSize uint32
+	// 每个worker最大等待处理的任务数量
+	MaxWorkerTaskSize uint32
 }
 
 // Reload 从配置文件中读取配置
@@ -45,12 +49,14 @@ var GlobalObject *GlobalObj
 
 func init() {
 	GlobalObject = &GlobalObj{
-		Name:          "ZinxServerApp",
-		Host:          "0.0.0.0",
-		TcpPort:       8999,
-		Version:       "zinx-v0.7",
-		MaxConn:       1024,
-		MaxPacketSize: 4096,
+		Name:              "ZinxServerApp",
+		Host:              "0.0.0.0",
+		TcpPort:           8999,
+		Version:           "zinx-v0.8",
+		MaxConn:           1024,
+		MaxPacketSize:     4096,
+		WorkerPoolSize:    0,
+		MaxWorkerTaskSize: 1024,
 	}
 
 	GlobalObject.Reload()

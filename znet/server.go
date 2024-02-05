@@ -37,6 +37,9 @@ func (s *Server) Start() {
 	fmt.Printf("[Server]Listenner on %s:%d is starting...\n", s.Ip, s.Port)
 
 	go func() {
+		// 初始化WorkerPool
+		s.MsgHandler.InitWorkerPool()
+
 		// 创建addr、绑定ip、端口
 		addr, err := net.ResolveTCPAddr(s.IpVersion, fmt.Sprintf("%s:%d", s.Ip, s.Port))
 		if err != nil {

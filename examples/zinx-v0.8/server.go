@@ -25,7 +25,7 @@ func (this *HelloRouter) Handle(request ziface.IRequest) {
 }
 
 func main() {
-	server := znet.NewServer("[zinx-v0.7]")
+	server := znet.NewServer("[zinx-v0.8]")
 	// 注册路由
 	server.AddRouter(0, &PingRouter{})
 	server.AddRouter(1, &HelloRouter{})
