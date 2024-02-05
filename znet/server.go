@@ -25,14 +25,14 @@ func NewServer(name string) ziface.IServer {
 	}
 }
 
-// 启动服务器，创建连接
+// Start 启动服务器，创建连接
 func (s *Server) Start() {
 	fmt.Printf("[Zinx]ServerName: %s\n", utils.GlobalObject.Name)
 	fmt.Printf("[Zinx]Host: %s\n", utils.GlobalObject.Host)
 	fmt.Printf("[Zinx]Port: %d\n", utils.GlobalObject.TcpPort)
 	fmt.Printf("[Zinx]Version: %s\n", utils.GlobalObject.Version)
 	fmt.Printf("[Zinx]MaxConn: %d\n", utils.GlobalObject.MaxConn)
-	fmt.Printf("[Zinx]MaxPackageSize: %d\n\n", utils.GlobalObject.MaxPackageSize)
+	fmt.Printf("[Zinx]MaxPackageSize: %d\n\n", utils.GlobalObject.MaxPacketSize)
 
 	fmt.Printf("[Server]Listenner on %s:%d is starting...\n", s.Ip, s.Port)
 
@@ -69,12 +69,12 @@ func (s *Server) Start() {
 	}()
 }
 
-// 停止服务器，释放资源
+// Stop 停止服务器，释放资源
 func (s *Server) Stop() {
 
 }
 
-// 运行服务器，初始化
+// Serve 运行服务器，初始化
 func (s *Server) Serve() {
 	s.Start()
 
@@ -86,5 +86,4 @@ func (s *Server) Serve() {
 
 func (s *Server) AddRouter(router ziface.IRouter) {
 	s.Router = router
-	fmt.Println("Add Router Successfully")
 }
