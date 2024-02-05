@@ -14,11 +14,14 @@ type Connection struct {
 	// 当前连接ID
 	ConnId uint32
 	// 当前连接状态
-	IsClosed bool
+	isClosed bool
 	// 当前连接的业务处理逻辑的MsgHandler
 	MsgHandler ziface.IMsgHandler
 	// 告知当前连接已经退出/停止的 channel
 	ExitChan chan bool
+	// Reader和Writer之间通信的 channel
+	// client -> server -> reader -> writer -> client
+	msgChan chan []byte
 }
 
 func NewConnection(conn *net.TCPConn, connId uint32, msgHandler ziface.IMsgHandler) *Connection {
@@ -26,12 +29,14 @@ func NewConnection(conn *net.TCPConn, connId uint32, msgHandler ziface.IMsgHandl
 		Conn:       conn,
 		ConnId:     connId,
 		MsgHandler: msgHandler,
-		IsClosed:   false,
+		isClosed:   false,
 		ExitChan:   make(chan bool, 1),
+		msgChan:    make(chan []byte),
 	}
 }
 
 func (conn *Connection) StartReader() {
+	fmt.Println("[Server]Start reader")
 	fmt.Println("[Server]Read message, connId =", conn.ConnId)
 	defer fmt.Println("[Server]Read message finished, connId =", conn.ConnId, " RemoteAddr =", conn.RemoteAddr().String())
 	defer conn.Stop()
@@ -74,22 +79,47 @@ func (conn *Connection) StartReader() {
 	}
 }
 
-func (conn *Connection) Start() {
-	fmt.Println("Connection start... connId =", conn.ConnId)
+// StartWriter 启动一个处理写业务逻辑的Goroutine
+// 可以在写前、写后做一些额外的操作
+func (conn *Connection) StartWriter() {
+	fmt.Println("[Server]Start writer")
+	fmt.Println("[Server]Write message, connId =", conn.ConnId)
+	defer fmt.Println("[Server]Write message finished, connId =", conn.ConnId, " RemoteAddr =", conn.RemoteAddr().String())
 
-	// 处理数据
+	for {
+		// 写业务逻辑
+		select {
+		case binaryData := <-conn.msgChan:
+			if _, err := conn.GetTcpConnection().Write(binaryData); err != nil {
+				fmt.Println("[Server]Write message error", err)
+				return
+			}
+		case <-conn.ExitChan:
+			return
+		}
+	}
+}
+
+func (conn *Connection) Start() {
+	fmt.Println("[Server]Connection start... connId =", conn.ConnId)
+
+	// 处理读业务
 	go conn.StartReader()
+	// 处理写业务
+	go conn.StartWriter()
 }
 
 func (conn *Connection) Stop() {
-	fmt.Println("Connection stop... connId =", conn.ConnId)
+	fmt.Println("[Server]Connection stop... connId =", conn.ConnId)
 
-	if conn.IsClosed {
+	if conn.isClosed {
 		return
 	}
 
-	conn.IsClosed = true
+	conn.isClosed = true
 	conn.Conn.Close()
+	conn.ExitChan <- true
+	close(conn.msgChan)
 	close(conn.ExitChan)
 }
 
@@ -107,7 +137,7 @@ func (conn *Connection) RemoteAddr() net.Addr {
 
 // SendMsg 发包，将数据封包，再发送出去
 func (conn *Connection) SendMsg(msgId uint32, data []byte) error {
-	if conn.IsClosed {
+	if conn.isClosed {
 		return errors.New("Connection closed")
 	}
 
@@ -119,11 +149,8 @@ func (conn *Connection) SendMsg(msgId uint32, data []byte) error {
 		return err
 	}
 
-	// 发包
-	if _, err = conn.GetTcpConnection().Write(binaryData); err != nil {
-		fmt.Println("[Server]Send message error, msgId=", msgId)
-		return err
-	}
+	// 发包, 将数据通过msgChan发送给Writer Goroutine
+	conn.msgChan <- binaryData
 
 	return nil
 }

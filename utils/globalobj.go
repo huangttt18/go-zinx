@@ -48,7 +48,7 @@ func init() {
 		Name:          "ZinxServerApp",
 		Host:          "0.0.0.0",
 		TcpPort:       8999,
-		Version:       "zinx-v0.6",
+		Version:       "zinx-v0.7",
 		MaxConn:       1024,
 		MaxPacketSize: 4096,
 	}
