@@ -1,8 +1,10 @@
 package ziface
 
 type IRequest interface {
-	// 获取连接
+	// GetConnection 获取连接
 	GetConnection() IConnection
-	// 获取数据
+	// GetData 获取数据
 	GetData() []byte
+	// GetMsgId 获取消息ID
+	GetMsgId() uint32
 }

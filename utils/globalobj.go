@@ -21,9 +21,9 @@ type GlobalObj struct {
 	// Zinx版本号
 	Version string
 	// 最大连接数
-	MaxConn int
+	MaxConn uint32
 	// 每次请求最大处理字节数
-	MaxPackageSize int
+	MaxPacketSize uint32
 }
 
 // 从配置文件中读取配置
@@ -45,12 +45,12 @@ var GlobalObject *GlobalObj
 
 func init() {
 	GlobalObject = &GlobalObj{
-		Name:           "ZinxServerApp",
-		Host:           "0.0.0.0",
-		TcpPort:        8999,
-		Version:        "zinx-v0.4",
-		MaxConn:        1024,
-		MaxPackageSize: 4096,
+		Name:          "ZinxServerApp",
+		Host:          "0.0.0.0",
+		TcpPort:       8999,
+		Version:       "zinx-v0.5",
+		MaxConn:       1024,
+		MaxPacketSize: 4096,
 	}
 
 	GlobalObject.Reload()
