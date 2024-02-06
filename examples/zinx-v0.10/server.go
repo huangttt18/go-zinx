@@ -46,7 +46,7 @@ func onConnStop(conn ziface.IConnection) {
 }
 
 func main() {
-	server := znet.NewServer("[zinx-v0.9]")
+	server := znet.NewServer("[zinx-v0.10]")
 	// 注册Hook函数
 	server.SetOnConnStart(onConnStart)
 	server.SetOnConnStop(onConnStop)
