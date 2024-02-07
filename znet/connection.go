@@ -8,6 +8,7 @@ import (
 	"sync"
 	"zinx-demo/utils"
 	"zinx-demo/ziface"
+	"zinx-demo/zpack"
 )
 
 type Connection struct {
@@ -58,7 +59,7 @@ func (conn *Connection) StartReader() {
 
 	for {
 		// 拆包，将二进制数据拆包为Message，再传递给router进行处理
-		dp := NewDataPack()
+		dp := zpack.NewDataPack()
 		// HeadData
 		headData := make([]byte, dp.GetHeadLen())
 		if _, err := io.ReadFull(conn.GetTcpConnection(), headData); err != nil {
@@ -70,7 +71,7 @@ func (conn *Connection) StartReader() {
 		msg, err := dp.Unpack(headData)
 		if err != nil {
 			fmt.Println("[Connection]Unpack head error", err)
-			break
+			continue
 		}
 
 		msgData := make([]byte, msg.GetDataLen())
@@ -168,8 +169,8 @@ func (conn *Connection) SendMsg(msgId uint32, data []byte) error {
 	}
 
 	// 封包
-	dp := NewDataPack()
-	binaryData, err := dp.Pack(NewMessage(msgId, data))
+	dp := zpack.NewDataPack()
+	binaryData, err := dp.Pack(zpack.NewMessage(msgId, data))
 	if err != nil {
 		fmt.Println("[Connection]Pack message error, msgId=", msgId)
 		return err

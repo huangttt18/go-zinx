@@ -58,7 +58,7 @@ func (s *Server) Start() {
 			return
 		}
 
-		fmt.Println("[Server]Zinx server", s.Name, "started, listenning...")
+		fmt.Println("[Server]", s.Name, "started, listenning...")
 		cid := uint32(0)
 		// 接受请求
 		for {

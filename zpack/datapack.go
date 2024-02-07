@@ -1,4 +1,4 @@
-package znet
+package zpack
 
 import (
 	"bytes"
@@ -25,13 +25,13 @@ func (dp *DataPack) Pack(msg ziface.IMessage) ([]byte, error) {
 	// 初始化缓冲区，数据将会读到这里
 	dataBuff := bytes.NewBuffer([]byte{})
 
-	// 读取DataLen
-	if err := binary.Write(dataBuff, binary.LittleEndian, msg.GetDataLen()); err != nil {
+	// 读取MsgId
+	if err := binary.Write(dataBuff, binary.LittleEndian, msg.GetMsgId()); err != nil {
 		return nil, err
 	}
 
-	// 读取MsgId
-	if err := binary.Write(dataBuff, binary.LittleEndian, msg.GetMsgId()); err != nil {
+	// 读取DataLen
+	if err := binary.Write(dataBuff, binary.LittleEndian, msg.GetDataLen()); err != nil {
 		return nil, err
 	}
 
@@ -49,13 +49,13 @@ func (dp *DataPack) Unpack(binaryData []byte) (ziface.IMessage, error) {
 
 	msg := &Message{}
 
-	// 拆DataLen
-	if err := binary.Read(dataBuff, binary.LittleEndian, &msg.DataLen); err != nil {
+	// 拆MsgId
+	if err := binary.Read(dataBuff, binary.LittleEndian, &msg.Id); err != nil {
 		return nil, err
 	}
 
-	// 拆MsgId
-	if err := binary.Read(dataBuff, binary.LittleEndian, &msg.Id); err != nil {
+	// 拆DataLen
+	if err := binary.Read(dataBuff, binary.LittleEndian, &msg.DataLen); err != nil {
 		return nil, err
 	}
 

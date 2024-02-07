@@ -1,4 +1,4 @@
-package znet
+package zpack
 
 type Message struct {
 	// 消息ID
